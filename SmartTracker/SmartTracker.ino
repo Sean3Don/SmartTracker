@@ -21,17 +21,43 @@
 #include <mavlink.h>
 #include <asynch_tx.h>
 #include <frsky.h>
+#include <math.h>
 
 namespace {
 
    static const int HeartbeatLed = 13;
+   double azimuth = 0;
+   double inclination = 0;
+   int homeLat = 0;
+   int homeLon = 0;
 
    //static const int FrSkySPInvertSignal = 2;
+   
+   double getAzimuth()
+   {
+     int dlat = the_aircraft.location.gps_lat - homeLat;
+     int dlon = the_aircraft.location.gps_lon - homeLon;
+     return atan2(dlon, dlat);
+   }
+   
+   double getInclination()
+   {
+     int dlat = the_aircraft.location.gps_lat - homeLat;
+     int dlon = the_aircraft.location.gps_lon - homeLon;
+     int angularDistance = sqrt(dlat^2 + dlon^2);
+     int distance = ((6371*PI)/180)*angularDistance;
+     return acos(the_aircraft.location.gps_lat/distance);
+   }
+   
+   void setHome(){
+     homeLat = the_aircraft.location.gps_lat;
+     homeLon = the_aircraft.location.gps_lon;
+   }
 
    void do_startup_leds(int n)
    {
         pinMode( HeartbeatLed, OUTPUT);   
-// do something to show we are starting up!
+        // do something to show we are starting up!
         for ( int i = 0; i < n; ++i){
            digitalWrite(HeartbeatLed,HIGH);
            delay(250);
